@@ -69,7 +69,7 @@ const TABS = [
   { id: "Musculation", label: "Muscu" },
   { id: "Nutrition", label: "Nutri" },
   { id: "Sommeil", label: "Sleep" },
-  { id: "Notes", label: "Notes" },
+  { id: "Notes", label: "Notes" }
 ];
 
 export default function App() {
@@ -243,7 +243,7 @@ function Musculation() {
 const foods = [
   { name: "Riz", kcal: 130, p: 2, g: 28, l: 0 },
   { name: "Poulet", kcal: 165, p: 31, g: 0, l: 3 },
-  { name: "Pomme", kcal: 52, p: 0, g: 14, l: 0 },
+  { name: "Pomme", kcal: 52, p: 0, g: 14, l: 0 }
 ];
 
 function Nutrition() {
@@ -263,7 +263,7 @@ function Nutrition() {
       kcal: (food.kcal * grams) / 100,
       p: (food.p * grams) / 100,
       g: (food.g * grams) / 100,
-      l: (food.l * grams) / 100,
+      l: (food.l * grams) / 100
     };
     setMeals([...meals, entry]);
   };
@@ -295,3 +295,65 @@ function Nutrition() {
           </li>
         ))}
       </ul>
+      <div className="mt-4">
+        <p>Kcal: {totals.kcal.toFixed(0)}</p>
+        <p>Prot: {totals.p.toFixed(1)}g</p>
+        <p>Gluc: {totals.g.toFixed(1)}g</p>
+        <p>Lip: {totals.l.toFixed(1)}g</p>
+      </div>
+    </Card>
+  );
+}
+
+/* ---------------- SOMMEIL ---------------- */
+function Sleep() {
+  const [wakeUp, setWakeUp] = useLocal("sleep.wakeUp", "07:00");
+
+  const bedtime = () => {
+    const [h, m] = wakeUp.split(":").map(Number);
+    const total = h * 60 + m;
+    const sleepNeed = 8 * 60;
+    let bt = total - sleepNeed;
+    if (bt < 0) bt += 24 * 60;
+    const hh = String(Math.floor(bt / 60)).padStart(2, "0");
+    const mm = String(bt % 60).padStart(2, "0");
+    return `${hh}:${mm}`;
+  };
+
+  return (
+    <Card>
+      <H2>Sommeil</H2>
+      <Label>Heure de réveil souhaitée</Label>
+      <Input
+        type="time"
+        value={wakeUp}
+        onChange={(e) => setWakeUp(e.target.value)}
+      />
+      <p className="mt-3">Heure conseillée de coucher : {bedtime()}</p>
+    </Card>
+  );
+}
+
+/* ---------------- NOTES ---------------- */
+function Notes() {
+  const [notes, setNotes] = useLocal("notes", []);
+
+  const addNote = () => {
+    const text = prompt("Nouvelle note ?");
+    if (text) setNotes([...notes, text]);
+  };
+
+  return (
+    <Card>
+      <H2>Notes</H2>
+      <Button onClick={addNote}>Ajouter une note</Button>
+      <ul className="mt-4">
+        {notes.map((n, i) => (
+          <li key={i} className="text-left mt-2">
+            {n}
+          </li>
+        ))}
+      </ul>
+    </Card>
+  );
+}
