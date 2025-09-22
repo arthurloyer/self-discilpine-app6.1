@@ -3,18 +3,12 @@ import React, { useEffect, useMemo, useState } from "react";
 /* ------------------ Helpers ------------------ */
 const cls = (...a) => a.filter(Boolean).join(" ");
 const todayKey = () => new Date().toISOString().slice(0, 10);
-const n = (x, d = 0) => {
-  const v = parseFloat(x); return isNaN(v) ? d : v;
-};
+const n = (x, d = 0) => { const v = parseFloat(x); return isNaN(v) ? d : v; };
 const norm = (s) => (s || "").normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase();
 function useLocal(key, init) {
   const [s, set] = useState(() => {
-    try {
-      const r = localStorage.getItem(key);
-      return r ? JSON.parse(r) : (typeof init === "function" ? init() : init);
-    } catch {
-      return typeof init === "function" ? init() : init;
-    }
+    try { const r = localStorage.getItem(key); return r ? JSON.parse(r) : (typeof init === "function" ? init() : init); }
+    catch { return typeof init === "function" ? init() : init; }
   });
   useEffect(() => { try { localStorage.setItem(key, JSON.stringify(s)); } catch {} }, [key, s]);
   return [s, set];
@@ -49,10 +43,10 @@ export default function App() {
 
   return (
     <div className="min-h-screen pb-28 relative overflow-x-hidden">
-      {/* Fond étoilé léger */}
+      {/* Fond léger */}
       <div className="stars pointer-events-none"></div>
 
-      {/* Header minimal */}
+      {/* Header */}
       <header className="sticky top-0 z-20 backdrop-blur-md bg-black/30 border-b border-white/10">
         <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -62,7 +56,7 @@ export default function App() {
         </div>
       </header>
 
-      {/* Contenu centré, uniquement scroll vertical */}
+      {/* Contenu centré */}
       <main className="max-w-6xl mx-auto px-4 py-6 grid gap-6 text-center">
         {tab === "Dashboard"   && <Dashboard />}
         {tab === "Hydratation" && <Hydration />}
@@ -72,7 +66,7 @@ export default function App() {
         {tab === "Notes"       && <Notes />}
       </main>
 
-      {/* Barre de navigation — 6 onglets (Notes incluse) */}
+      {/* Barre de nav (Notes incluse) */}
       <div className="fixed bottom-3 inset-x-0 px-4">
         <div className="max-w-lg mx-auto glass neon-border rounded-3xl p-2 grid grid-cols-6 gap-1 overflow-hidden">
           {TABS.map(t => (
@@ -93,7 +87,6 @@ export default function App() {
 
 /* ================= DASHBOARD amélioré ================= */
 function Dashboard() {
-  // Récupération de mini-stats stockées localStorage
   const day = todayKey();
 
   // Hydratation
@@ -108,77 +101,60 @@ function Dashboard() {
   const slept = sleepLog[day]?.h || 0;
   const sleepPct = Math.min(100, Math.round((slept / Math.max(1, sleepGoal)) * 100));
 
-  // Nutrition (kcal du jour)
-  const nutLogs = JSON.parse(localStorage.getItem("nut.logs") || "{}");
-  const recipes = JSON.parse(localStorage.getItem("nut.recipes") || "[]");
+  // Nutrition (calcule les totaux à partir des recettes et logs)
   const foods = JSON.parse(localStorage.getItem("nut.foods") || "[]");
-  const todayMeals = nutLogs[day]?.meals || { breakfast: [], lunch: [], dinner: [], snacks: [] };
-  function macroItem(it) {
-    const r = recipes.find(x => x.id === it.recipeId);
-    if (!r) return { k: 0, p: 0, c: 0, f: 0 };
-    const base = r.items.reduce((acc, ing) => {
-      const f = foods.find(x => x.id === ing.foodId);
-      const ratio = (ing.grams || 0) / 100;
-      acc.k += Math.round((f?.per100.kcal || 0) * ratio);
-      acc.p += Math.round((f?.per100.p || 0) * ratio);
-      acc.c += Math.round((f?.per100.c || 0) * ratio);
-      acc.f += Math.round((f?.per100.f || 0) * ratio);
-      return acc;
-    }, { k: 0, p: 0, c: 0, f: 0 });
-    return base;
+  const recipes = JSON.parse(localStorage.getItem("nut.recipes") || "[]");
+  const nutLogs = JSON.parse(localStorage.getItem("nut.logs") || "{}");
+  const todayMeals = nutLogs[day]?.meals || { breakfast:[], lunch:[], dinner:[], snacks:[] };
+  function itemMacros(it){
+    const r = recipes.find(x=>x.id===it.recipeId); if(!r) return {k:0,p:0,c:0,f:0};
+    const base = r.items.reduce((acc,ing)=>{
+      const f = foods.find(x=>x.id===ing.foodId); const R=(ing.grams||0)/100;
+      acc.k+=Math.round((f?.per100.kcal||0)*R); acc.p+=Math.round((f?.per100.p||0)*R);
+      acc.c+=Math.round((f?.per100.c||0)*R); acc.f+=Math.round((f?.per100.f||0)*R); return acc;
+    },{k:0,p:0,c:0,f:0});
+    const per = {k:Math.round(base.k/(r.servings||1)), p:Math.round(base.p/(r.servings||1)), c:Math.round(base.c/(r.servings||1)), f:Math.round(base.f/(r.servings||1))};
+    const mult = it.portions||1; return {k:per.k*mult,p:per.p*mult,c:per.c*mult,f:per.f*mult};
   }
-  const totals = Object.values(todayMeals).flat().reduce((a, it) => {
-    const m = macroItem(it);
-    a.k += m.k; a.p += m.p; a.c += m.c; a.f += m.f; return a;
-  }, { k: 0, p: 0, c: 0, f: 0 });
+  const totals = Object.values(todayMeals).flat().reduce((a,it)=>{ const m=itemMacros(it); a.k+=m.k; a.p+=m.p; a.c+=m.c; a.f+=m.f; return a; },{k:0,p:0,c:0,f:0});
 
-  // Notes (au moins 1 élément coché)
+  // Notes
   const notes = JSON.parse(localStorage.getItem("notes.items") || "{}");
-  const notesDone = Object.values(notes).some(list => (list || []).some(it => it.done));
+  const notesDone = Object.values(notes).some(list => (list||[]).some(it => it.done));
 
   // Score global simple
-  const score = Math.min(100,
-    (hydrPct * 0.3) + (sleepPct * 0.3) + (Math.min(100, (totals.k > 0 ? 100 : 0)) * 0.3) + (notesDone ? 10 : 0)
-  );
+  const score = Math.min(100, (hydrPct*0.3)+(sleepPct*0.3)+((totals.k>0)?30:0)+(notesDone?10:0));
   const scoreInt = Math.round(score);
 
-  const quote = useMemo(() => {
-    const QUOTES = [
-      "Petits pas, grands effets.",
-      "La discipline bat la motivation.",
-      "Faire aujourd’hui ce que les autres remettent.",
-      "Tu es en compétition avec toi-même.",
-      "Chaque jour compte. Celui-ci aussi."
-    ];
-    return QUOTES[(new Date().getDate()) % QUOTES.length];
-  }, []);
+  const quote = useMemo(()=> {
+    const QUOTES = ["Petits pas, grands effets.","La discipline bat la motivation.","Faire aujourd’hui ce que les autres remettent.","Tu es en compétition avec toi-même.","Chaque jour compte. Celui-ci aussi."];
+    return QUOTES[(new Date().getDate())%QUOTES.length];
+  },[]);
 
   return (
-    <div className="grid gap-6">
-      <Card className="overflow-hidden relative">
-        <H2>Tableau de bord</H2>
-        <div className="mt-4 grid md:grid-cols-[260px_1fr] gap-6 items-center">
-          {/* Jauge principale */}
-          <div className="relative w-[240px] h-[240px] mx-auto rounded-full bg-gradient-to-br from-neon-blue/40 to-neon-violet/40 border border-white/20 shadow-holo grid place-items-center">
-            <div className="absolute inset-0 rounded-full" style={{ background: `conic-gradient(#38bdf8 ${scoreInt * 3.6}deg, rgba(255,255,255,.08) 0deg)` }}></div>
-            <div className="absolute inset-5 rounded-full glass grid place-items-center">
-              <div className="text-4xl font-bold">{scoreInt}</div>
-              <div className="text-xs text-zinc-300">score</div>
-            </div>
+    <Card className="overflow-hidden relative">
+      <H2>Tableau de bord</H2>
+      <div className="mt-4 grid md:grid-cols-[260px_1fr] gap-6 items-center">
+        {/* Jauge */}
+        <div className="relative w-[240px] h-[240px] mx-auto rounded-full bg-gradient-to-br from-neon-blue/40 to-neon-violet/40 border border-white/20 shadow-holo grid place-items-center
           </div>
 
           {/* Mini-widgets */}
           <div className="grid sm:grid-cols-2 gap-3 text-left">
             <div className="glass rounded-2xl p-3">
               <div className="text-sm opacity-80">Hydratation</div>
-              <div className="text-2xl font-semibold">{ml}<span className="text-sm ml-1">/ {hydrGoal} mL</span></div>
+              <div className="text-2xl font-semibold">
+                {ml}<span className="text-sm ml-1">/ {hydrGoal} mL</span>
+              </div>
               <div className="mt-2 h-2 bg-white/10 rounded-full overflow-hidden">
                 <div className="h-full bg-gradient-to-r from-neon-blue to-neon-violet" style={{ width: `${hydrPct}%` }} />
               </div>
             </div>
             <div className="glass rounded-2xl p-3">
               <div className="text-sm opacity-80">Sommeil</div>
-              <div className="text-2xl font-semibold">{slept}<span className="text-sm ml-1">/ {sleepGoal} h</span></div>
+              <div className="text-2xl font-semibold">
+                {slept}<span className="text-sm ml-1">/ {sleepGoal} h</span>
+              </div>
               <div className="mt-2 h-2 bg-white/10 rounded-full overflow-hidden">
                 <div className="h-full bg-gradient-to-r from-neon-blue to-neon-violet" style={{ width: `${sleepPct}%` }} />
               </div>
@@ -197,13 +173,11 @@ function Dashboard() {
         {/* Citation motivante */}
         <div className="mt-5 text-sm text-zinc-300 italic">“{quote}”</div>
       </Card>
-    </div>
   );
 }
 
 /* ================= HYDRATATION (bouteille verticale) ================= */
 function Bottle({ pct = 0 }) {
-  // Hauteur totale de remplissage dans la bouteille
   const H = 200;
   const fillY = H - Math.round((H * pct) / 100);
 
@@ -211,7 +185,6 @@ function Bottle({ pct = 0 }) {
     <svg viewBox="0 0 120 220" className="w-28 h-[220px] drop-shadow">
       <defs>
         <clipPath id="bottle-clip">
-          {/* goulot + corps arrondi */}
           <path d="M50 5 h20 v20 a10 10 0 0 1 -10 10 h-0 a10 10 0 0 1 -10 -10 z M40 35 h40 v10 h-40 z
                    M35 45 q-10 30 -10 60 v60 q0 40 20 60 q20 20 40 0 q20 -20 20 -60 v-60 q0 -30 -10 -60 z" />
         </clipPath>
@@ -221,12 +194,10 @@ function Bottle({ pct = 0 }) {
         </linearGradient>
       </defs>
 
-      {/* contour */}
       <path d="M50 5 h20 v20 a10 10 0 0 1 -10 10 h-0 a10 10 0 0 1 -10 -10 z" fill="none" stroke="#7dd3fc" strokeWidth="3"/>
       <rect x="40" y="35" width="40" height="10" rx="4" fill="none" stroke="#7dd3fc" strokeWidth="2" />
       <path d="M35 45 q-10 30 -10 60 v60 q0 40 20 60 q20 20 40 0 q20 -20 20 -60 v-60 q0 -30 -10 -60 z" fill="none" stroke="#7dd3fc" strokeWidth="2"/>
 
-      {/* remplissage animé */}
       <g clipPath="url(#bottle-clip)">
         <rect x="0" y={fillY} width="120" height={H + 50 - fillY} fill="url(#grad)">
           <animate attributeName="y" dur="0.4s" to={fillY} fill="freeze" />
@@ -275,13 +246,7 @@ function Hydration() {
   );
 }
 
-/* ======= Les sections suivantes arrivent dans la Partie 2 & 3 ======= */
-function Musculation(){ return null; } // placeholder (Partie 2)
-function Nutrition(){ return null; }   // placeholder (Partie 2)
-function Sleep(){ return null; }       // placeholder (Partie 3)
-function Notes(){ return null; }       // placeholder (Partie 3)
 /* ================= MUSCULATION (séances + catalogue + défis PDC) ================= */
-
 const EXOS = [
   {id:"back-squat", name:"Back Squat", eq:"Barre", muscles:["Quadriceps","Fessiers","Ischios"], cues:["Pieds stables","Dos neutre","Genoux suivent orteils"], mistakes:["Dos rond","Talons décollés"], prog:"Force 3–5x3–5 • Hyper 3–5x6–10"},
   {id:"front-squat", name:"Front Squat", eq:"Barre", muscles:["Quadriceps","Tronc"], cues:["Coudes hauts","Tronc gainé"], mistakes:["Dos qui s'arrondit"], prog:"3–5x4–8"},
@@ -331,16 +296,16 @@ function Musculation() {
     if (!sid) return alert("Choisis une séance.");
     setSessions(sessions.map(s => s.id === sid ? { ...s, items: [...new Set([...s.items, exId])] } : s));
   }
-  function removeFromSession(exId, sid) {
-    setSessions(sessions.map(s => s.id === sid ? { ...s, items: s.items.filter(i => i !== exId) } : s));
-  }
+  function removeFromSession(exId, sid) { setSessions(sessions.map(s => s.id === sid ? { ...s, items: s.items.filter(i => i !== exId) } : s)); }
   function startRest(exId, sec = 60) { setRest(prev => ({ ...prev, [exId]: sec })); }
+
   useEffect(() => {
     const on = Object.values(rest).some(v => v > 0);
     if (!on) return;
     const t = setInterval(() => {
       setRest(prev => {
-        const nx = { ...prev }; Object.keys(nx).forEach(k => { if (nx[k] > 0) nx[k] -= 1; });
+        const nx = { ...prev };
+        Object.keys(nx).forEach(k => { if (nx[k] > 0) nx[k] -= 1; });
         return nx;
       });
     }, 1000);
@@ -475,8 +440,6 @@ function Musculation() {
 }
 
 /* ================= NUTRITION (aliments, macros auto, recettes, journal) ================= */
-
-// Base d’aliments (40+) : kcal / P / G / L pour 100g
 const FOOD_BASE = [
   ["Riz blanc cuit",130,2.4,28,0.3],["Riz basmati cuit",121,3.5,25.2,0.4],["Pâtes cuites",157,5.8,30.9,0.9],
   ["Quinoa cuit",120,4.4,21.3,1.9],["Avoine (flocons)",389,16.9,66.3,6.9],["Pain complet",247,13,41,4.2],
@@ -495,15 +458,13 @@ const FOOD_BASE = [
 ].map(([name,kcal,p,c,f])=>({id: name.toLowerCase().replace(/[^a-z0-9]+/g,"-"), name, per100:{kcal,p,c,f}}));
 
 function Nutrition() {
-  // Profil & objectifs (simplifié, déjà amélioré auparavant)
   const [profile, setProfile] = useLocal("nut.profile", { age:25, sex:"H", height:175, weight:70, activity:"moderate", goal:"maintain", deltaPerWeekKg:0.0, proteinPerKg:2.0, fatPerKg:0.8 });
   const [foods]   = useLocal("nut.foods", FOOD_BASE);
   const [recipes, setRecipes] = useLocal("nut.recipes", []);
   const [day] = useLocal("nut.day", todayKey());
   const [log, setLog] = useLocal("nut.logs", {});
-  if(!log[day]) log[day] = { meals:{breakfast:[],lunch:[],dinner:[],snacks:[]} };
+  useEffect(() => { if(!log[day]) setLog(prev => ({ ...prev, [day]: { meals:{breakfast:[],lunch:[],dinner:[],snacks:[]}, totals:{k:0,p:0,c:0,f:0} } })); /* eslint-disable-line */ }, [day]);
 
-  // Objectifs calculés
   const [goalCals, macros] = useMemo(()=>{
     const w=profile.weight, h=profile.height, a=profile.age, s=profile.sex==="F"?-161:5;
     const bmr=10*w+6.25*h-5*a+s; const map={sedentary:1.2,light:1.375,moderate:1.55,active:1.725,very:1.9};
@@ -515,23 +476,45 @@ function Nutrition() {
     return [Math.round(tdee), {protein, carbs, fat}];
   },[profile]);
 
-  // Recherche aliments
   const [search,setSearch]=useState(""); const [grams,setGrams]=useState(100); const [sel,setSel]=useState(null);
   const filtered = foods.filter(f => norm(f.name).includes(norm(search)));
   const macrosFrom = (f, g) => { const r=(g||0)/100; return { k:Math.round(f.per100.kcal*r), p:Math.round(f.per100.p*r), c:Math.round(f.per100.c*r), f:Math.round(f.per100.f*r) }; };
   const msel = sel ? macrosFrom(sel, grams) : {k:0,p:0,c:0,f:0};
 
-  // Recettes
   const [rid,setRid]=useState(""); const [name,setName]=useState(""); const [serv,setServ]=useState(1);
   function addRecipe() { if(!name.trim()) return; const id="r-"+Math.random().toString(36).slice(2); setRecipes([...recipes,{id,name:name.trim(),servings:serv,items:[],photo:null}]); setRid(id); setName(""); setServ(1); }
   function addIngredient(rid, foodId, grams){ setRecipes(recipes.map(r=> r.id===rid?{...r, items:[...r.items,{foodId,grams:n(grams)}]}:r)); }
   function removeIngredient(rid, idx){ setRecipes(recipes.map(r=> r.id===rid?{...r, items:r.items.filter((_,i)=>i!==idx)}:r)); }
-  function addToMeal(rid, meal, portions=1){ setLog(prev=>{ const nx={...prev}; nx[day]=nx[day]||{meals:{breakfast:[],lunch:[],dinner:[],snacks:[]}}; nx[day].meals[meal]=[...nx[day].meals[meal], {recipeId:rid, portions}]; return nx; }); }
 
-  // Totaux jour
+  function addToMeal(rid, meal, portions=1){
+    setLog(prev=>{
+      const nx = { ...prev };
+      nx[day] = nx[day] || { meals:{breakfast:[],lunch:[],dinner:[],snacks:[]}, totals:{k:0,p:0,c:0,f:0} };
+      nx[day].meals[meal] = [...nx[day].meals[meal], {recipeId:rid, portions}];
+      return nx;
+    });
+  }
+
   function caloriesOfFood(item){ const f=foods.find(x=>x.id===item.foodId); const r=(item.grams||0)/100; return { k:Math.round((f?.per100.kcal||0)*r), p:Math.round((f?.per100.p||0)*r), c:Math.round((f?.per100.c||0)*r), f:Math.round((f?.per100.f||0)*r) }; }
   function recipeTotals(r, portions){ const base=r.items.reduce((acc,it)=>{ const m=caloriesOfFood(it); acc.k+=m.k; acc.p+=m.p; acc.c+=m.c; acc.f+=m.f; return acc; },{k:0,p:0,c:0,f:0}); const per={k:Math.round(base.k/(r.servings||1)),p:Math.round(base.p/(r.servings||1)),c:Math.round(base.c/(r.servings||1)),f:Math.round(base.f/(r.servings||1))}; return { k:per.k*portions, p:per.p*portions, c:per.c*portions, f:per.f*portions }; }
-  const totals = Object.values((log[day]||{meals:{}}).meals||{}).flat().reduce((acc,it)=>{ const r=recipes.find(x=>x.id===it.recipeId); if(!r) return acc; const t=recipeTotals(r, it.portions||1); acc.k+=t.k; acc.p+=t.p; acc.c+=t.c; acc.f+=t.f; return acc; },{k:0,p:0,c:0,f:0});
+
+  const totals = useMemo(()=>{
+    const d = log[day]; if(!d) return {k:0,p:0,c:0,f:0};
+    return Object.values(d.meals||{}).flat().reduce((acc,it)=>{
+      const r=recipes.find(x=>x.id===it.recipeId); if(!r) return acc;
+      const t=recipeTotals(r, it.portions||1);
+      acc.k+=t.k; acc.p+=t.p; acc.c+=t.c; acc.f+=t.f; return acc;
+    },{k:0,p:0,c:0,f:0});
+  },[log, day, recipes]);
+
+  useEffect(()=>{
+    setLog(prev=>{
+      const nx={...prev};
+      nx[day] = nx[day] || { meals:{breakfast:[],lunch:[],dinner:[],snacks:[]}, totals:{k:0,p:0,c:0,f:0} };
+      nx[day].totals = totals;
+      return nx;
+    });
+  },[totals, day, setLog]);
 
   return (
     <div className="grid gap-6">
@@ -613,7 +596,6 @@ function Nutrition() {
       <Card>
         <H2>Recettes & Journal</H2>
         <div className="grid md:grid-cols-2 gap-3 mt-3 text-left">
-          {/* Création / sélection recette */}
           <div className="glass rounded-2xl p-3">
             <div className="font-medium mb-2">Créer une recette</div>
             <div className="flex flex-wrap gap-2">
@@ -630,12 +612,10 @@ function Nutrition() {
             </div>
           </div>
 
-          {/* Ajouter ingrédient à la recette */}
           <RecipeIngredients foods={foods} rid={rid} addIngredient={addIngredient} removeIngredient={removeIngredient} recipes={recipes} />
         </div>
 
-        {/* Journal du jour */}
-        <DayJournal recipes={recipes} addToMeal={addToMeal} log={log[day]} totals={totals} />
+        <DayJournal recipes={recipes} addToMeal={addToMeal} log={log[day] || {meals:{breakfast:[],lunch:[],dinner:[],snacks:[]}}} totals={totals} />
       </Card>
     </div>
   );
@@ -646,7 +626,6 @@ function RecipeIngredients({ foods, rid, addIngredient, removeIngredient, recipe
   const filtered = foods.filter(f=> norm(f.name).includes(norm(search)));
   const r = recipes.find(x=>x.id===rid);
   function caloriesOfFood(item){ const f=foods.find(x=>x.id===item.foodId); const ratio=(item.grams||0)/100; return { k:Math.round((f?.per100.kcal||0)*ratio), p:Math.round((f?.per100.p||0)*ratio), c:Math.round((f?.per100.c||0)*ratio), f:Math.round((f?.per100.f||0)*ratio) }; }
-
   if(!r) return <div className="glass rounded-2xl p-3">Sélectionne ou crée une recette pour ajouter des ingrédients.</div>;
 
   return (
@@ -708,7 +687,7 @@ function DayJournal({ recipes, addToMeal, log, totals }){
       <div className="glass rounded-2xl p-3">
         <div className="font-medium mb-2">Journal du jour</div>
         <div className="grid md:grid-cols-2 gap-2">
-          {Object.entries(log.meals).map(([k,arr])=>(
+          {Object.entries(log.meals || {breakfast:[],lunch:[],dinner:[],snacks:[]}).map(([k,arr])=>(
             <div key={k} className="glass rounded-2xl p-3">
               <div className="font-medium mb-1">{{breakfast:'Petit-déj',lunch:'Déjeuner',dinner:'Dîner',snacks:'Collation'}[k]}</div>
               <div className="grid gap-2">{arr.map((it,idx)=>{ const r=recipes.find(x=>x.id===it.recipeId); return (
@@ -729,20 +708,19 @@ function DayJournal({ recipes, addToMeal, log, totals }){
     </div>
   );
 }
+
 /* ================= SOMMEIL amélioré ================= */
 function Sleep() {
-  const [goal, setGoal] = useLocal("sleep.goal", 8); // heures
+  const [goal, setGoal] = useLocal("sleep.goal", 8);
   const [log, setLog] = useLocal("sleep.log", {});
   const k = todayKey();
   const today = new Date();
 
   const wakeTime = new Date(today.getTime() + 24 * 3600 * 1000);
-  wakeTime.setHours(7, 0, 0, 0); // réveil cible à 7h par défaut
+  wakeTime.setHours(7, 0, 0, 0);
   const bedtime = new Date(wakeTime.getTime() - goal * 3600 * 1000);
 
-  function setSlept(h) {
-    setLog(prev => ({ ...prev, [k]: { h } }));
-  }
+  function setSlept(h) { setLog(prev => ({ ...prev, [k]: { h } })); }
 
   return (
     <Card>
@@ -764,9 +742,7 @@ function Sleep() {
           <Label>Sommeil enregistré aujourd’hui</Label>
           <Input type="number" step="0.5" value={log[k]?.h || ""} onChange={e => setSlept(n(e.target.value, 0))} />
           <div className="glass rounded-2xl p-3">
-            {log[k]?.h
-              ? `Tu as dormi ${log[k].h}h, objectif ${goal}h.`
-              : "Renseigne ton sommeil ce matin."}
+            {log[k]?.h ? `Tu as dormi ${log[k].h}h, objectif ${goal}h.` : "Renseigne ton sommeil ce matin."}
           </div>
         </div>
       </div>
@@ -776,97 +752,15 @@ function Sleep() {
 
 /* ================= NOTES (catégories simples) ================= */
 function Notes() {
-  const [items, setItems] = useLocal("notes.items", {
-    todo: [],
-    buy: [],
-    ideas: []
-  });
-  const cats = {
-    todo: "À faire",
-    buy: "À acheter",
-    ideas: "Idées"
-  };
+  const [items, setItems] = useLocal("notes.items", { todo: [], buy: [], ideas: [] });
+  const cats = { todo: "À faire", buy: "À acheter", ideas: "Idées" };
 
   function add(cat) {
     const t = prompt(`Nouvelle note (${cats[cat]}) :`);
     if (t) setItems({ ...items, [cat]: [...items[cat], { text: t, done: false }] });
   }
   function toggle(cat, i) {
-    setItems({
-      ...items,
-      [cat]: items[cat].map((x, j) => j === i ? { ...x, done: !x.done } : x)
-    });
-  }
-  function remove(cat, i) {
-    setItems({ ...items, [cat]: items[cat].filter((_, j) => j !== i) });
-  }
-/* ================= SOMMEIL amélioré ================= */
-function Sleep() {
-  const [goal, setGoal] = useLocal("sleep.goal", 8); // heures
-  const [log, setLog] = useLocal("sleep.log", {});
-  const k = todayKey();
-  const today = new Date();
-
-  const wakeTime = new Date(today.getTime() + 24 * 3600 * 1000);
-  wakeTime.setHours(7, 0, 0, 0); // réveil cible à 7h par défaut
-  const bedtime = new Date(wakeTime.getTime() - goal * 3600 * 1000);
-
-  function setSlept(h) {
-    setLog(prev => ({ ...prev, [k]: { h } }));
-  }
-
-  return (
-    <Card>
-      <H2>Sommeil</H2>
-      <div className="grid md:grid-cols-2 gap-6 mt-3 text-left">
-        <div className="grid gap-3">
-          <Label>Objectif (heures / nuit)</Label>
-          <Input type="number" min="4" max="12" step="0.5" value={goal} onChange={e => setGoal(n(e.target.value, 8))} />
-          <Label>Heure de coucher conseillée</Label>
-          <div className="glass rounded-2xl p-3">{bedtime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
-          <Label>Conseils sommeil</Label>
-          <ul className="list-disc pl-5 text-sm space-y-1">
-            <li>Dors avant 23h pour optimiser la récupération.</li>
-            <li>Évite les écrans 30 min avant.</li>
-            <li>Expose-toi à la lumière naturelle le matin.</li>
-          </ul>
-        </div>
-        <div className="grid gap-3">
-          <Label>Sommeil enregistré aujourd’hui</Label>
-          <Input type="number" step="0.5" value={log[k]?.h || ""} onChange={e => setSlept(n(e.target.value, 0))} />
-          <div className="glass rounded-2xl p-3">
-            {log[k]?.h
-              ? `Tu as dormi ${log[k].h}h, objectif ${goal}h.`
-              : "Renseigne ton sommeil ce matin."}
-          </div>
-        </div>
-      </div>
-    </Card>
-  );
-}
-
-/* ================= NOTES (catégories simples) ================= */
-function Notes() {
-  const [items, setItems] = useLocal("notes.items", {
-    todo: [],
-    buy: [],
-    ideas: []
-  });
-  const cats = {
-    todo: "À faire",
-    buy: "À acheter",
-    ideas: "Idées"
-  };
-
-  function add(cat) {
-    const t = prompt(`Nouvelle note (${cats[cat]}) :`);
-    if (t) setItems({ ...items, [cat]: [...items[cat], { text: t, done: false }] });
-  }
-  function toggle(cat, i) {
-    setItems({
-      ...items,
-      [cat]: items[cat].map((x, j) => j === i ? { ...x, done: !x.done } : x)
-    });
+    setItems({ ...items, [cat]: items[cat].map((x, j) => j === i ? { ...x, done: !x.done } : x) });
   }
   function remove(cat, i) {
     setItems({ ...items, [cat]: items[cat].filter((_, j) => j !== i) });
