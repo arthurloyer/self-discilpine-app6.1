@@ -101,78 +101,140 @@ function Dashboard() {
   const slept = sleepLog[day]?.h || 0;
   const sleepPct = Math.min(100, Math.round((slept / Math.max(1, sleepGoal)) * 100));
 
-  // Nutrition (calcule les totaux à partir des recettes et logs)
+  // Nutrition (totaux du jour calculés depuis recettes/journal)
   const foods = JSON.parse(localStorage.getItem("nut.foods") || "[]");
   const recipes = JSON.parse(localStorage.getItem("nut.recipes") || "[]");
   const nutLogs = JSON.parse(localStorage.getItem("nut.logs") || "{}");
-  const todayMeals = nutLogs[day]?.meals || { breakfast:[], lunch:[], dinner:[], snacks:[] };
-  function itemMacros(it){
-    const r = recipes.find(x=>x.id===it.recipeId); if(!r) return {k:0,p:0,c:0,f:0};
-    const base = r.items.reduce((acc,ing)=>{
-      const f = foods.find(x=>x.id===ing.foodId); const R=(ing.grams||0)/100;
-      acc.k+=Math.round((f?.per100.kcal||0)*R); acc.p+=Math.round((f?.per100.p||0)*R);
-      acc.c+=Math.round((f?.per100.c||0)*R); acc.f+=Math.round((f?.per100.f||0)*R); return acc;
-    },{k:0,p:0,c:0,f:0});
-    const per = {k:Math.round(base.k/(r.servings||1)), p:Math.round(base.p/(r.servings||1)), c:Math.round(base.c/(r.servings||1)), f:Math.round(base.f/(r.servings||1))};
-    const mult = it.portions||1; return {k:per.k*mult,p:per.p*mult,c:per.c*mult,f:per.f*mult};
+  const todayMeals = nutLogs[day]?.meals || { breakfast: [], lunch: [], dinner: [], snacks: [] };
+
+  function itemMacros(it) {
+    const r = recipes.find((x) => x.id === it.recipeId);
+    if (!r) return { k: 0, p: 0, c: 0, f: 0 };
+    const base = r.items.reduce(
+      (acc, ing) => {
+        const f = foods.find((x) => x.id === ing.foodId);
+        const R = (ing.grams || 0) / 100;
+        acc.k += Math.round((f?.per100.kcal || 0) * R);
+        acc.p += Math.round((f?.per100.p || 0) * R);
+        acc.c += Math.round((f?.per100.c || 0) * R);
+        acc.f += Math.round((f?.per100.f || 0) * R);
+        return acc;
+      },
+      { k: 0, p: 0, c: 0, f: 0 }
+    );
+    const per = {
+      k: Math.round(base.k / (r.servings || 1)),
+      p: Math.round(base.p / (r.servings || 1)),
+      c: Math.round(base.c / (r.servings || 1)),
+      f: Math.round(base.f / (r.servings || 1)),
+    };
+    const mult = it.portions || 1;
+    return { k: per.k * mult, p: per.p * mult, c: per.c * mult, f: per.f * mult };
   }
-  const totals = Object.values(todayMeals).flat().reduce((a,it)=>{ const m=itemMacros(it); a.k+=m.k; a.p+=m.p; a.c+=m.c; a.f+=m.f; return a; },{k:0,p:0,c:0,f:0});
+
+  const totals = Object.values(todayMeals)
+    .flat()
+    .reduce(
+      (a, it) => {
+        const m = itemMacros(it);
+        a.k += m.k;
+        a.p += m.p;
+        a.c += m.c;
+        a.f += m.f;
+        return a;
+      },
+      { k: 0, p: 0, c: 0, f: 0 }
+    );
 
   // Notes
   const notes = JSON.parse(localStorage.getItem("notes.items") || "{}");
-  const notesDone = Object.values(notes).some(list => (list||[]).some(it => it.done));
+  const notesDone = Object.values(notes).some((list) =>
+    (list || []).some((it) => it.done)
+  );
 
-  // Score global simple
-  const score = Math.min(100, (hydrPct*0.3)+(sleepPct*0.3)+((totals.k>0)?30:0)+(notesDone?10:0));
+  // Score global
+  const score = Math.min(
+    100,
+    hydrPct * 0.3 + sleepPct * 0.3 + (totals.k > 0 ? 30 : 0) + (notesDone ? 10 : 0)
+  );
   const scoreInt = Math.round(score);
 
-  const quote = useMemo(()=> {
-    const QUOTES = ["Petits pas, grands effets.","La discipline bat la motivation.","Faire aujourd’hui ce que les autres remettent.","Tu es en compétition avec toi-même.","Chaque jour compte. Celui-ci aussi."];
-    return QUOTES[(new Date().getDate())%QUOTES.length];
-  },[]);
+  // Citation
+  const quote = useMemo(() => {
+    const QUOTES = [
+      "Petits pas, grands effets.",
+      "La discipline bat la motivation.",
+      "Faire aujourd’hui ce que les autres remettent.",
+      "Tu es en compétition avec toi-même.",
+      "Chaque jour compte. Celui-ci aussi.",
+    ];
+    return QUOTES[new Date().getDate() % QUOTES.length];
+  }, []);
 
   return (
     <Card className="overflow-hidden relative">
       <H2>Tableau de bord</H2>
-      <div className="mt-4 grid md:grid-cols-[260px_1fr] gap-6 items-center">
-        {/* Jauge */}
-        <div className="relative w-[240px] h-[240px] mx-auto rounded-full bg-gradient-to-br from-neon-blue/40 to-neon-violet/40 border border-white/20 shadow-holo grid place-items-center
-          </div>
 
-          {/* Mini-widgets */}
-          <div className="grid sm:grid-cols-2 gap-3 text-left">
-            <div className="glass rounded-2xl p-3">
-              <div className="text-sm opacity-80">Hydratation</div>
-              <div className="text-2xl font-semibold">
-                {ml}<span className="text-sm ml-1">/ {hydrGoal} mL</span>
-              </div>
-              <div className="mt-2 h-2 bg-white/10 rounded-full overflow-hidden">
-                <div className="h-full bg-gradient-to-r from-neon-blue to-neon-violet" style={{ width: `${hydrPct}%` }} />
-              </div>
-            </div>
-            <div className="glass rounded-2xl p-3">
-              <div className="text-sm opacity-80">Sommeil</div>
-              <div className="text-2xl font-semibold">
-                {slept}<span className="text-sm ml-1">/ {sleepGoal} h</span>
-              </div>
-              <div className="mt-2 h-2 bg-white/10 rounded-full overflow-hidden">
-                <div className="h-full bg-gradient-to-r from-neon-blue to-neon-violet" style={{ width: `${sleepPct}%` }} />
-              </div>
-            </div>
-            <div className="glass rounded-2xl p-3">
-              <div className="text-sm opacity-80">Kcal du jour</div>
-              <div className="text-2xl font-semibold">{totals.k}</div>
-            </div>
-            <div className="glass rounded-2xl p-3">
-              <div className="text-sm opacity-80">Notes</div>
-              <div className="text-2xl font-semibold">{notesDone ? "✓" : "—"}</div>
-            </div>
+      <div className="mt-4 grid md:grid-cols-[260px_1fr] gap-6 items-center">
+        {/* Jauge principale */}
+        <div className="relative w-[240px] h-[240px] mx-auto rounded-full bg-gradient-to-br from-neon-blue/40 to-neon-violet/40 border border-white/20 shadow-holo grid place-items-center">
+          <div
+            className="absolute inset-0 rounded-full"
+            style={{
+              background: `conic-gradient(#38bdf8 ${scoreInt * 3.6}deg, rgba(255,255,255,.08) 0deg)`,
+            }}
+          ></div>
+          <div className="absolute inset-5 rounded-full glass grid place-items-center">
+            <div className="text-4xl font-bold">{scoreInt}</div>
+            <div className="text-xs text-zinc-300">score</div>
           </div>
         </div>
 
-        {/* Citation motivante */}
-        <div className="mt-5 text-sm text-zinc-300 italic">“{quote}”</div>
-      </Card>
+        {/* Mini-widgets */}
+        <div className="grid sm:grid-cols-2 gap-3 text-left">
+          <div className="glass rounded-2xl p-3">
+            <div className="text-sm opacity-80">Hydratation</div>
+            <div className="text-2xl font-semibold">
+              {ml}
+              <span className="text-sm ml-1">/ {hydrGoal} mL</span>
+            </div>
+            <div className="mt-2 h-2 bg-white/10 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-gradient-to-r from-neon-blue to-neon-violet"
+                style={{ width: `${hydrPct}%` }}
+              />
+            </div>
+          </div>
+
+          <div className="glass rounded-2xl p-3">
+            <div className="text-sm opacity-80">Sommeil</div>
+            <div className="text-2xl font-semibold">
+              {slept}
+              <span className="text-sm ml-1">/ {sleepGoal} h</span>
+            </div>
+            <div className="mt-2 h-2 bg-white/10 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-gradient-to-r from-neon-blue to-neon-violet"
+                style={{ width: `${sleepPct}%` }}
+              />
+            </div>
+          </div>
+
+          <div className="glass rounded-2xl p-3">
+            <div className="text-sm opacity-80">Kcal du jour</div>
+            <div className="text-2xl font-semibold">{totals.k}</div>
+          </div>
+
+          <div className="glass rounded-2xl p-3">
+            <div className="text-sm opacity-80">Notes</div>
+            <div className="text-2xl font-semibold">{notesDone ? "✓" : "—"}</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Citation motivante */}
+      <div className="mt-5 text-sm text-zinc-300 italic">“{quote}”</div>
+    </Card>
   );
 }
 
