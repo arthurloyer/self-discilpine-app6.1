@@ -1,23 +1,24 @@
-<!DOCTYPE html>
-<html lang="fr">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Self-Discipline App</title>
+:root {
+  --bg: #0b0c12;
+  --card: rgba(255, 255, 255, 0.06);
+  --border: rgba(255, 255, 255, 0.18);
+  --text: #ffffff;
+  --accent1: #38bdf8; /* bleu néon */
+  --accent2: #a855f7; /* violet néon */
+  --blur: 10px;
+}
 
-    <!-- Manifest pour installation iPhone -->
-    <link rel="manifest" href="/manifest.webmanifest" />
+* { box-sizing: border-box; }
+html, body, #root { height: 100%; overflow-x: hidden; }
+body {
+  margin: 0;
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial;
+  background: var(--bg);
+  color: var(--text);
+}
 
-    <!-- Icônes -->
-    <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192.png" />
-    <link rel="apple-touch-icon" sizes="512x512" href="/icons/icon-512.png" />
+img { display: block; max-width: 100%; }
+button { background: none; color: inherit; cursor: pointer; border: 0; }
+input, select, button { font: inherit; color: inherit; }
 
-    <!-- Couleur barre iOS -->
-    <meta name="theme-color" content="#0a0a0a" />
-  </head>
-  <body>
-    <div id="root"></div>
-
-    <script type="module" src="/src/main.jsx"></script>
-  </body>
-</html>
+.break-anywhere { overflow-wrap: anywhere; word-break: break-word; }
