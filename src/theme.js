@@ -7,13 +7,17 @@ const DEFAULT = { mode: "neon" }; // "neon" | "sobre"
 
 export function ThemeProvider({ children }) {
   const [theme, setTheme] = useState(() => {
-    try { return JSON.parse(localStorage.getItem("ascend.theme")) || DEFAULT; }
-    catch { return DEFAULT; }
+    try {
+      return JSON.parse(localStorage.getItem("ascend.theme")) || DEFAULT;
+    } catch {
+      return DEFAULT;
+    }
   });
 
   useEffect(() => {
     localStorage.setItem("ascend.theme", JSON.stringify(theme));
     const r = document.documentElement;
+
     if (theme.mode === "sobre") {
       r.style.setProperty("--bg", "#0b0b0c");
       r.style.setProperty("--card", "rgba(255,255,255,0.05)");
@@ -23,6 +27,7 @@ export function ThemeProvider({ children }) {
       r.style.setProperty("--accent2", "#ffffff");
       r.style.setProperty("--blur", "14px");
     } else {
+      // NEON
       r.style.setProperty("--bg", "#0b0c12");
       r.style.setProperty("--card", "rgba(255,255,255,0.06)");
       r.style.setProperty("--border", "rgba(255,255,255,0.18)");
@@ -35,3 +40,4 @@ export function ThemeProvider({ children }) {
 
   return <ThemeCtx.Provider value={{ theme, setTheme }}>{children}</ThemeCtx.Provider>;
 }
+
