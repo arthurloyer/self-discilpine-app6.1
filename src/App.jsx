@@ -1,53 +1,25 @@
 import React, { useEffect, useMemo, useState } from "react";
 import logoUrl from "./assets/LOGOASCEND.png";
 
-/* ------------------ UI de base ------------------ */
+/* ----------------------------------
+   Helpers & petites utilitaires
+-----------------------------------*/
 const cls = (...a) => a.filter(Boolean).join(" ");
-const H1 = ({ children }) => <div className="h1">{children}</div>;
-const H2 = ({ children }) => <div className="h2">{children}</div>;
-const Label = ({ children }) => <div className="sub" style={{ textTransform: "uppercase" }}>{children}</div>;
-const Button = ({ className = "", ...p }) => <button className={cls("btn", className)} {...p} />;
-const Input = ({ className = "", ...p }) => <input className={cls("input", className)} {...p} />;
-
-function ThemedCard({ themeMode, className = "", style, children, ...p }) {
-  const isSobre = themeMode === "sobre";
-  const baseStyle = isSobre
-    ? {
-        background: "#ffffff",
-        border: "1px solid #e5e7eb",
-        borderRadius: 24,
-        boxShadow: "0 6px 20px rgba(0,0,0,0.07)",
-        padding: 16,
-      }
-    : undefined; // en néon, on laisse la classe .card (déjà stylée dans index.css)
-  return (
-    <div
-      className={cls(isSobre ? "" : "card", className)}
-      style={{ ...(baseStyle || {}), ...(style || {}) }}
-      {...p}
-    >
-      {children}
-    </div>
-  );
-}
-
-/* ------------------ Helpers ------------------ */
 const todayKey = () => new Date().toISOString().slice(0, 10);
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 
-/* ------------------ Thème (Sobre / Néon) ------------------ */
+/* ----------------------------------
+   Thème (Néon / Sobre)
+-----------------------------------*/
 function applyTheme(mode) {
   const r = document.documentElement;
   if (mode === "sobre") {
-    // fond blanc, texte noir, bordures gris clair
     r.style.setProperty("--bg", "#ffffff");
     r.style.setProperty("--text", "#000000");
     r.style.setProperty("--border", "#e5e7eb");
-    // accents sobres (noir/gris)
     r.style.setProperty("--accent1", "#111111");
     r.style.setProperty("--accent2", "#111111");
   } else {
-    // NEON (comme avant)
     r.style.setProperty("--bg", "#0b0c12");
     r.style.setProperty("--text", "#ffffff");
     r.style.setProperty("--border", "rgba(255,255,255,0.18)");
@@ -55,9 +27,10 @@ function applyTheme(mode) {
     r.style.setProperty("--accent2", "#a855f7");
   }
 }
-
 function useThemeMode() {
-  const [themeMode, setThemeMode] = useState(() => localStorage.getItem("ascend.theme") || "neon");
+  const [themeMode, setThemeMode] = useState(
+    () => localStorage.getItem("ascend.theme") || "neon"
+  );
   useEffect(() => {
     applyTheme(themeMode);
     localStorage.setItem("ascend.theme", themeMode);
@@ -65,27 +38,43 @@ function useThemeMode() {
   return { themeMode, setThemeMode };
 }
 
-/* ------------------ Header / SideMenu / BottomNav ------------------ */
+/* ----------------------------------
+   UI de base
+-----------------------------------*/
+const H1 = ({ children }) => <div className="h1">{children}</div>;
+const H2 = ({ children }) => <div className="h2">{children}</div>;
+const Label = ({ children }) => (
+  <div className="sub" style={{ textTransform: "uppercase" }}>{children}</div>
+);
+const Button = ({ className = "", ...p }) => <button className={cls("btn", className)} {...p} />;
+const Input = ({ className = "", ...p }) => <input className={cls("input", className)} {...p} />;
+
+/* ----------------------------------
+   Header (logo + burger)
+-----------------------------------*/
 function Header({ onMenu }) {
   return (
     <header className="header">
       <div className="container header-inner">
         <div className="row" style={{ gap: 12 }}>
           <img src={logoUrl} alt="Ascend" style={{ width: 28, height: 28, objectFit: "contain" }} />
-          <div style={{ fontWeight: 600, letterSpacing: 0.3 }}>Ascend</div>
+          <div style={{ fontWeight: 600, letterSpacing: .3 }}>Ascend</div>
         </div>
-        <Button aria-label="Menu" onClick={onMenu}>
+        <button aria-label="Menu" onClick={onMenu} style={{ border: 0, background: "none", cursor: "pointer" }}>
           <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-            <span style={{ display: "block", width: 24, height: 2, background: "var(--text)" }} />
-            <span style={{ display: "block", width: 24, height: 2, background: "var(--text)" }} />
-            <span style={{ display: "block", width: 24, height: 2, background: "var(--text)" }} />
+            <span style={{ width: 24, height: 2, background: "var(--text)" }} />
+            <span style={{ width: 24, height: 2, background: "var(--text)" }} />
+            <span style={{ width: 24, height: 2, background: "var(--text)" }} />
           </div>
-        </Button>
+        </button>
       </div>
     </header>
   );
 }
 
+/* ----------------------------------
+   SideMenu (Contact / Infos / Compte / Thème)
+-----------------------------------*/
 function SideMenu({ open, onClose, themeMode, setThemeMode }) {
   return (
     <>
@@ -97,50 +86,49 @@ function SideMenu({ open, onClose, themeMode, setThemeMode }) {
             <Button onClick={onClose}>Fermer</Button>
           </div>
 
-          <ThemedCard themeMode={themeMode}>
+          <div className="card">
             <div style={{ fontWeight: 600, marginBottom: 8 }}>Contact</div>
             <p className="sub" style={{ textTransform: "none" }}>contact@ascend.app (exemple)</p>
-          </ThemedCard>
+          </div>
 
-          <ThemedCard themeMode={themeMode}>
+          <div className="card">
             <div style={{ fontWeight: 600, marginBottom: 8 }}>Mes informations</div>
-            <p className="sub" style={{ textTransform: "none" }}>Taille, poids, objectifs… (à venir)</p>
-          </ThemedCard>
+            <p className="sub" style={{ textTransform: "none" }}>Taille, poids, objectifs…</p>
+          </div>
 
-          <ThemedCard themeMode={themeMode}>
+          <div className="card">
             <div style={{ fontWeight: 600, marginBottom: 8 }}>Mon compte</div>
-            <p className="sub" style={{ textTransform: "none" }}>Version locale : pas de compte requis.</p>
-          </ThemedCard>
+            <p className="sub" style={{ textTransform: "none" }}>Version locale pour l’instant.</p>
+          </div>
 
-          <ThemedCard themeMode={themeMode}>
+          <div className="card">
             <div style={{ fontWeight: 600, marginBottom: 8 }}>Thème</div>
             <div className="row">
               <Button
                 onClick={() => setThemeMode("sobre")}
                 style={{
                   borderColor: themeMode === "sobre" ? "var(--text)" : "var(--border)",
-                  background: themeMode === "sobre" ? (themeMode === "sobre" ? "#f3f4f6" : "transparent") : "transparent",
+                  background: themeMode === "sobre" ? "#f3f4f6" : "transparent",
                 }}
-              >
-                Sobre
-              </Button>
+              >Sobre</Button>
               <Button
                 onClick={() => setThemeMode("neon")}
                 style={{
                   borderColor: themeMode === "neon" ? "var(--text)" : "var(--border)",
                   background: themeMode === "neon" ? "rgba(255,255,255,.08)" : "transparent",
                 }}
-              >
-                Néon
-              </Button>
+              >Néon</Button>
             </div>
-          </ThemedCard>
+          </div>
         </div>
       </div>
     </>
   );
 }
 
+/* ----------------------------------
+   BottomNav fixée + place en bas
+-----------------------------------*/
 function BottomNav({ tab, setTab, themeMode }) {
   const items = [
     { id: "dashboard", label: "Dashboard" },
@@ -154,11 +142,7 @@ function BottomNav({ tab, setTab, themeMode }) {
   return (
     <nav
       style={{
-        position: "fixed",
-        left: 0,
-        right: 0,
-        bottom: 0,
-        zIndex: 50,
+        position: "fixed", left: 0, right: 0, bottom: 0, zIndex: 50,
         borderTop: `1px solid var(--border)`,
         background: isSobre ? "#ffffff" : "rgba(0,0,0,.35)",
         backdropFilter: isSobre ? "none" : "blur(10px)",
@@ -176,9 +160,7 @@ function BottomNav({ tab, setTab, themeMode }) {
                 border: "1px solid var(--border)",
                 background:
                   tab === it.id
-                    ? isSobre
-                      ? "#f3f4f6"
-                      : "rgba(255,255,255,.08)"
+                    ? isSobre ? "#f3f4f6" : "rgba(255,255,255,.08)"
                     : "transparent",
               }}
             >
@@ -190,9 +172,49 @@ function BottomNav({ tab, setTab, themeMode }) {
     </nav>
   );
 }
+/* ----------------------------------
+   Dashboard (résumé du jour)
+-----------------------------------*/
+function Dashboard() {
+  const k = todayKey();
+  const goal = Number(localStorage.getItem("hydr.goal") || 2500);
+  const logs = JSON.parse(localStorage.getItem("hydr.logs") || "{}");
+  const ml = logs[k]?.ml || 0;
+  const hydrPct = clamp(Math.round((ml / Math.max(1, goal)) * 100), 0, 100);
 
-/* ------------------ Sections ------------------ */
-/* Hydratation */
+  return (
+    <div className="card">
+      <H1>Tableau de bord</H1>
+      <div className="grid grid-3" style={{ marginTop: 12 }}>
+        <div className="card">
+          <div className="sub">Hydratation</div>
+          <div style={{ marginTop: 8, fontWeight: 600 }}>{ml} mL / {goal} mL</div>
+          <div className="progress" style={{ marginTop: 8 }}>
+            <div className="progress__bar" style={{ width: `${hydrPct}%` }} />
+          </div>
+        </div>
+        <div className="card">
+          <div className="sub">Sommeil</div>
+          <div style={{ marginTop: 8 }}>Voir section</div>
+          <div className="progress" style={{ marginTop: 8 }}>
+            <div className="progress__bar" style={{ width: "66%" }} />
+          </div>
+        </div>
+        <div className="card">
+          <div className="sub">Nutrition & Défi</div>
+          <div style={{ marginTop: 8 }}>Voir sections</div>
+          <div className="progress" style={{ marginTop: 8 }}>
+            <div className="progress__bar" style={{ width: "50%" }} />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ----------------------------------
+   Hydratation (bouteille + slider)
+-----------------------------------*/
 function HydrationSection() {
   const k = todayKey();
   const [goal, setGoal] = useState(Number(localStorage.getItem("hydr.goal") || 2500));
@@ -284,14 +306,33 @@ function HydrationSection() {
     </div>
   );
 }
-
-/* Musculation */
+/* ----------------------------------
+   Musculation (défi PDC + exos)
+-----------------------------------*/
 const EXOS = [
-  { id: "pushups", name: "Pompes", tips: ["Dos droit, mains sous épaules.", "Gainage constant."] },
-  { id: "squats", name: "Squats", tips: ["Pieds largeur épaules.", "Descends cuisses // au sol."] },
-  { id: "plank", name: "Planche", tips: ["Coudes sous épaules.", "Bassin neutre."] },
-  { id: "lunges", name: "Fentes", tips: ["Genou avant au-dessus de la cheville.", "Tronc droit."] },
-  { id: "burpees", name: "Burpees", tips: ["Mouvement complet, explosif.", "Reste gainé."] },
+  // Haut du corps
+  { id: "pushups", name: "Pompes", tips: ["Dos droit, mains sous épaules", "Gainage constant"] },
+  { id: "diamond-pushups", name: "Pompes diamant", tips: ["Coudes proches du corps", "Contrôle sur toute l’amplitude"] },
+  { id: "pike-pushups", name: "Pompes pike", tips: ["Fesses vers le haut", "Vise les épaules"] },
+  { id: "dips-chairs", name: "Dips entre chaises", tips: ["Épaules basses", "Évite d’aller trop bas"] },
+  { id: "pullups", name: "Tractions pronation", tips: ["Épaules basses", "Poitrine vers la barre"] },
+  { id: "chinups", name: "Tractions supination", tips: ["Coude sous la barre", "Ne cambre pas trop"] },
+  { id: "australian-pullups", name: "Tractions australiennes", tips: ["Corps gainé", "Talons au sol"] },
+  // Bas du corps
+  { id: "squats", name: "Squats", tips: ["Pieds largeur épaules", "Genoux suivent la pointe des pieds"] },
+  { id: "lunges", name: "Fentes", tips: ["Tronc droit", "Genou avant au-dessus de la cheville"] },
+  { id: "jump-squats", name: "Squats sautés", tips: ["Atterrissage doux", "Genoux souples"] },
+  { id: "glute-bridge", name: "Hip Thrust / Pont fessier", tips: ["Pieds stables", "Serre en haut"] },
+  { id: "calf-raises", name: "Mollets debout", tips: ["Pleine amplitude", "Marque une pause en haut"] },
+  // Gainage & core
+  { id: "plank", name: "Planche", tips: ["Coudes sous épaules", "Bassin neutre"] },
+  { id: "side-plank", name: "Planche latérale", tips: ["Alignement tête-bassin", "Contracte les obliques"] },
+  { id: "hollow-hold", name: "Hollow hold", tips: ["Bas du dos au sol", "Épaules décollées"] },
+  { id: "leg-raises", name: "Relevés de jambes", tips: ["Dos plaqué", "Contrôle la descente"] },
+  // Cardio PDC
+  { id: "burpees", name: "Burpees", tips: ["Mouvement fluide", "Respiration régulière"] },
+  { id: "mountain-climbers", name: "Mountain climbers", tips: ["Gainage", "Genoux vers la poitrine"] },
+  { id: "jumping-jacks", name: "Jumping jacks", tips: ["Pieds légers", "Rythme constant"] },
 ];
 
 function useDailyChallenge() {
@@ -331,7 +372,7 @@ function MusculationSection() {
 
   return (
     <div className="stack">
-      <ThemedCard themeMode={localStorage.getItem("ascend.theme") || "neon"}>
+      <div className="card">
         <div className="row" style={{ justifyContent: "space-between" }}>
           <div>
             <div className="sub">Défi PDC du jour</div>
@@ -342,9 +383,9 @@ function MusculationSection() {
             <span>Fait</span>
           </label>
         </div>
-      </ThemedCard>
+      </div>
 
-      <ThemedCard themeMode={localStorage.getItem("ascend.theme") || "neon"}>
+      <div className="card">
         <div className="row" style={{ justifyContent: "space-between" }}>
           <div className="h2">Bibliothèque d’exercices</div>
           <Input placeholder="Rechercher…" value={q} onChange={e => setQ(e.target.value)} style={{ maxWidth: 220 }} />
@@ -352,38 +393,83 @@ function MusculationSection() {
         <div className="grid grid-2" style={{ marginTop: 12 }}>
           {list.map(ex => (
             <div key={ex.id}>
-              <ThemedCard
-                themeMode={localStorage.getItem("ascend.theme") || "neon"}
-                className="btn"
-                onClick={() => setOpen(open === ex.id ? null : ex.id)}
-              >
+              <div className="card btn" onClick={() => setOpen(open === ex.id ? null : ex.id)}>
                 <div style={{ fontWeight: 600 }}>{ex.name}</div>
-              </ThemedCard>
+              </div>
               {open === ex.id && (
-                <ThemedCard themeMode={localStorage.getItem("ascend.theme") || "neon"} style={{ marginTop: 8 }}>
+                <div className="card" style={{ marginTop: 8 }}>
                   <div className="row" style={{ justifyContent: "space-between" }}>
                     <div className="h2">Conseils — {ex.name}</div>
                     <Button onClick={() => setOpen(null)}>Fermer</Button>
                   </div>
                   <ul style={{ marginTop: 8, paddingLeft: 18 }}>
-                    {ex.tips.map((t, i) => <li key={i} className="sub" style={{ textTransform: "none" }}>{t}</li>)}
+                    {ex.tips.map((t, i) => (
+                      <li key={i} className="sub" style={{ textTransform: "none" }}>{t}</li>
+                    ))}
                   </ul>
-                </ThemedCard>
+                </div>
               )}
             </div>
           ))}
         </div>
-      </ThemedCard>
+      </div>
     </div>
   );
 }
 
-/* Nutrition (simple) */
+/* ----------------------------------
+   Sommeil (suggestion simple)
+-----------------------------------*/
+function SleepSection() {
+  const k = todayKey();
+  const logs = JSON.parse(localStorage.getItem("hydr.logs") || "{}");
+  const ml = logs[k]?.ml || 0;
+  const goal = Number(localStorage.getItem("hydr.goal") || 2500);
+  const ratio = goal ? ml / goal : 0;
+  const baseBed = 23; // 23:00
+  const shift = ratio < 0.6 ? -0.5 : 0; // 30 min plus tôt si peu hydraté
+  const bedHour = (baseBed + shift + 24) % 24;
+  const text = `Heure de coucher conseillée : ${String(Math.floor(bedHour)).padStart(2, "0")}:${shift === -0.5 ? "30" : "00"}`;
+
+  return (
+    <div className="stack">
+      <div className="card">
+        <div className="h2">Recommandation</div>
+        <div style={{ marginTop: 8 }}>{text}</div>
+        <div className="sub" style={{ marginTop: 8, textTransform: "none" }}>
+          Vise un endormissement avant 23h pour une meilleure récupération.
+        </div>
+      </div>
+    </div>
+  );
+}
+/* ----------------------------------
+   Nutrition (profil + aliments + macros)
+-----------------------------------*/
 const BASE_FOODS = [
+  // Boissons / basiques
   { id: "eau", name: "Eau", per100: { kcal: 0, p: 0, c: 0, f: 0 } },
+  { id: "lait-ecreme", name: "Lait écrémé", per100: { kcal: 35, p: 3.4, c: 5, f: 0.1 } },
+  // Protéines
   { id: "poulet", name: "Poulet (100g cuit)", per100: { kcal: 165, p: 31, c: 0, f: 3.6 } },
+  { id: "dinde", name: "Dinde (100g cuit)", per100: { kcal: 135, p: 29, c: 0, f: 1 } },
+  { id: "oeuf", name: "Œuf (1x50g)", per100: { kcal: 155, p: 13, c: 1.1, f: 11 } },
+  { id: "thon", name: "Thon (100g)", per100: { kcal: 132, p: 29, c: 0, f: 1 } },
+  { id: "saumon", name: "Saumon (100g)", per100: { kcal: 208, p: 20, c: 0, f: 13 } },
+  // Glucides
   { id: "riz", name: "Riz cuit (100g)", per100: { kcal: 130, p: 2.7, c: 28, f: 0.3 } },
+  { id: "pates", name: "Pâtes cuites (100g)", per100: { kcal: 157, p: 5.8, c: 30, f: 0.9 } },
+  { id: "pain", name: "Pain (100g)", per100: { kcal: 265, p: 9, c: 49, f: 3.2 } },
+  { id: "patate", name: "Pomme de terre (100g)", per100: { kcal: 77, p: 2, c: 17, f: 0.1 } },
+  // Fruits & Légumes
   { id: "pomme", name: "Pomme (100g)", per100: { kcal: 52, p: 0.3, c: 14, f: 0.2 } },
+  { id: "banane", name: "Banane (100g)", per100: { kcal: 89, p: 1.1, c: 23, f: 0.3 } },
+  { id: "brocoli", name: "Brocoli (100g)", per100: { kcal: 34, p: 2.8, c: 7, f: 0.4 } },
+  { id: "carotte", name: "Carotte (100g)", per100: { kcal: 41, p: 0.9, c: 10, f: 0.2 } },
+  // Lipides
+  { id: "avocat", name: "Avocat (100g)", per100: { kcal: 160, p: 2, c: 9, f: 15 } },
+  { id: "amandes", name: "Amandes (100g)", per100: { kcal: 579, p: 21, c: 22, f: 50 } },
+  { id: "huile-olive", name: "Huile d’olive (100g)", per100: { kcal: 884, p: 0, c: 0, f: 100 } },
 ];
 
 function NutritionSection() {
@@ -431,23 +517,23 @@ function NutritionSection() {
 
   return (
     <div className="stack">
-      <ThemedCard themeMode={localStorage.getItem("ascend.theme") || "neon"}>
+      <div className="card">
         <div className="h2">Objectif personnalisé</div>
         <div className="grid grid-3" style={{ marginTop: 12 }}>
           <div>
             <Label>Poids (kg)</Label>
             <Input type="number" value={profile.weight}
-              onChange={e => saveProfile({ ...profile, weight: Number(e.target.value) || 0 })} />
+                   onChange={e => saveProfile({ ...profile, weight: Number(e.target.value) || 0 })} />
           </div>
           <div>
             <Label>Taille (cm)</Label>
             <Input type="number" value={profile.height}
-              onChange={e => saveProfile({ ...profile, height: Number(e.target.value) || 0 })} />
+                   onChange={e => saveProfile({ ...profile, height: Number(e.target.value) || 0 })} />
           </div>
           <div>
             <Label>Objectif</Label>
             <select className="input" value={profile.target}
-              onChange={e => saveProfile({ ...profile, target: e.target.value })}>
+                    onChange={e => saveProfile({ ...profile, target: e.target.value })}>
               <option value="maintien">Maintien</option>
               <option value="perte">Perte de poids</option>
               <option value="prise">Prise de masse</option>
@@ -458,9 +544,9 @@ function NutritionSection() {
           <div className="sub">Apport conseillé :</div>
           <div style={{ fontWeight: 600 }}>{kcalTarget} kcal / jour (approx.)</div>
         </div>
-      </ThemedCard>
+      </div>
 
-      <ThemedCard themeMode={localStorage.getItem("ascend.theme") || "neon"}>
+      <div className="card">
         <div className="row" style={{ justifyContent: "space-between" }}>
           <div className="h2">Bibliothèque alimentaire</div>
           <div className="row">
@@ -489,37 +575,14 @@ function NutritionSection() {
         )}
 
         {!selected && <div className="sub" style={{ marginTop: 12, textTransform: "none" }}>Aucun aliment trouvé.</div>}
-      </ThemedCard>
+      </div>
     </div>
   );
 }
 
-/* Sommeil */
-function SleepSection() {
-  const k = todayKey();
-  const logs = JSON.parse(localStorage.getItem("hydr.logs") || "{}");
-  const ml = logs[k]?.ml || 0;
-  const goal = Number(localStorage.getItem("hydr.goal") || 2500);
-  const ratio = goal ? ml / goal : 0;
-  const baseBed = 23;
-  const shift = ratio < 0.6 ? -0.5 : 0;
-  const bedHour = (baseBed + shift + 24) % 24;
-  const text = `Heure de coucher conseillée : ${String(Math.floor(bedHour)).padStart(2, "0")}:${shift === -0.5 ? "30" : "00"}`;
-
-  return (
-    <div className="stack">
-      <ThemedCard themeMode={localStorage.getItem("ascend.theme") || "neon"}>
-        <div className="h2">Recommandation</div>
-        <div style={{ marginTop: 8 }}>{text}</div>
-        <div className="sub" style={{ marginTop: 8, textTransform: "none" }}>
-          Conseil : vise un endormissement avant 23h pour une meilleure récupération.
-        </div>
-      </ThemedCard>
-    </div>
-  );
-}
-
-/* Notes */
+/* ----------------------------------
+   Notes (retour à la ligne + suppression)
+-----------------------------------*/
 function NotesSection() {
   const [items, setItems] = useState(() => {
     try { return JSON.parse(localStorage.getItem("notes.items")) || []; }
@@ -543,7 +606,7 @@ function NotesSection() {
 
   return (
     <div className="stack">
-      <ThemedCard themeMode={localStorage.getItem("ascend.theme") || "neon"}>
+      <div className="card">
         <div className="h2">Nouvelle note</div>
         <div className="stack" style={{ marginTop: 8 }}>
           <textarea
@@ -556,9 +619,9 @@ function NotesSection() {
           />
           <Button onClick={addNote}>Ajouter</Button>
         </div>
-      </ThemedCard>
+      </div>
 
-      <ThemedCard themeMode={localStorage.getItem("ascend.theme") || "neon"}>
+      <div className="card">
         <div className="h2">Mes notes</div>
         <div className="stack" style={{ marginTop: 8 }}>
           {items.length === 0 && <div className="sub" style={{ textTransform: "none" }}>Aucune note.</div>}
@@ -571,56 +634,20 @@ function NotesSection() {
             </div>
           ))}
         </div>
-      </ThemedCard>
+      </div>
     </div>
   );
 }
 
-/* Dashboard */
-function Dashboard({ themeMode }) {
-  const k = todayKey();
-  const goal = Number(localStorage.getItem("hydr.goal") || 2500);
-  const logs = JSON.parse(localStorage.getItem("hydr.logs") || "{}");
-  const ml = logs[k]?.ml || 0;
-  const hydrPct = clamp(Math.round((ml / Math.max(1, goal)) * 100), 0, 100);
-
-  return (
-    <ThemedCard themeMode={themeMode}>
-      <H1>Tableau de bord</H1>
-      <div className="grid grid-3" style={{ marginTop: 12 }}>
-        <ThemedCard themeMode={themeMode}>
-          <div className="sub">Hydratation</div>
-          <div style={{ marginTop: 8, fontWeight: 600 }}>{ml} mL / {goal} mL</div>
-          <div className="progress" style={{ marginTop: 8 }}>
-            <div className="progress__bar" style={{ width: `${hydrPct}%` }} />
-          </div>
-        </ThemedCard>
-        <ThemedCard themeMode={themeMode}>
-          <div className="sub">Sommeil</div>
-          <div style={{ marginTop: 8 }}>Voir section</div>
-          <div className="progress" style={{ marginTop: 8 }}>
-            <div className="progress__bar" style={{ width: "66%" }} />
-          </div>
-        </ThemedCard>
-        <ThemedCard themeMode={themeMode}>
-          <div className="sub">Nutrition & Défi</div>
-          <div style={{ marginTop: 8 }}>Voir sections</div>
-          <div className="progress" style={{ marginTop: 8 }}>
-            <div className="progress__bar" style={{ width: "50%" }} />
-          </div>
-        </ThemedCard>
-      </div>
-    </ThemedCard>
-  );
-}
-
-/* ------------------ APP ------------------ */
+/* ----------------------------------
+   APP (layout d’avant + ajouts)
+-----------------------------------*/
 export default function App() {
   const { themeMode, setThemeMode } = useThemeMode();
   const [menuOpen, setMenuOpen] = useState(false);
   const [tab, setTab] = useState("dashboard");
 
-  // Re-render minimal si localStorage change
+  // Re-render si localStorage change (hydratation slider, etc.)
   const [, setTick] = useState(0);
   useEffect(() => {
     const on = () => setTick(t => t + 1);
@@ -632,12 +659,12 @@ export default function App() {
     <div style={{ background: "var(--bg)", color: "var(--text)" }}>
       <Header onMenu={() => setMenuOpen(true)} />
 
-      <main style={{ paddingBottom: 90 /* évite d’être masqué par la BottomNav fixée */ }}>
+      <main style={{ paddingBottom: 90 /* ne pas masquer par bottom-nav fixée */ }}>
         <div className="container stack-lg">
-          {tab === "dashboard" && <Dashboard themeMode={themeMode} />}
+          {tab === "dashboard" && <Dashboard />}
 
           {tab === "hydration" && (
-            <section>
+            <section className="card">
               <H2>Hydratation</H2>
               <div style={{ height: 12 }} />
               <HydrationSection />
@@ -645,7 +672,7 @@ export default function App() {
           )}
 
           {tab === "muscle" && (
-            <section>
+            <section className="card">
               <H2>Musculation</H2>
               <div style={{ height: 12 }} />
               <MusculationSection />
@@ -653,7 +680,7 @@ export default function App() {
           )}
 
           {tab === "nutrition" && (
-            <section>
+            <section className="card">
               <H2>Nutrition</H2>
               <div style={{ height: 12 }} />
               <NutritionSection />
@@ -661,7 +688,7 @@ export default function App() {
           )}
 
           {tab === "sleep" && (
-            <section>
+            <section className="card">
               <H2>Sommeil</H2>
               <div style={{ height: 12 }} />
               <SleepSection />
@@ -669,7 +696,7 @@ export default function App() {
           )}
 
           {tab === "notes" && (
-            <section>
+            <section className="card">
               <H2>Notes</H2>
               <div style={{ height: 12 }} />
               <NotesSection />
