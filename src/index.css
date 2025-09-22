@@ -1,58 +1,118 @@
 :root{
-  --bg:#0b0c12; --card:rgba(255,255,255,.06); --border:rgba(255,255,255,.18);
-  --text:#fff; --accent1:#38bdf8; --accent2:#a855f7; --blur:14px;
+  --bg:#0b0c12;
+  --text:#ffffff;
+  --border:rgba(255,255,255,.18);
+  --accent1:#38bdf8; /* bleu néon */
+  --accent2:#a855f7; /* violet néon */
+  --blur:14px;
 }
 
 *{box-sizing:border-box}
 html,body,#root{height:100%; margin:0; overflow-x:hidden}
-body{font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial; background:var(--bg); color:var(--text)}
+body{
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial;
+  background:var(--bg);
+  color:var(--text);
+}
 img{display:block; max-width:100%}
 button{background:none; color:inherit; cursor:pointer; border:0}
-input,select,button{font:inherit; color:inherit}
+input, select, textarea, button{font:inherit; color:inherit}
 
-/* ------- Layout global ------- */
+/* --------- Layout de base --------- */
 .container{max-width:1100px; margin:0 auto; padding:20px 16px}
 .stack{display:flex; flex-direction:column; gap:16px}
 .stack-lg{display:flex; flex-direction:column; gap:32px}
 .row{display:flex; align-items:center; gap:12px; flex-wrap:wrap}
 
-/* ------- Cartes & têtes ------- */
+/* --------- Header --------- */
+.header{
+  position:sticky; top:0; z-index:40;
+  border-bottom:1px solid var(--border);
+  background:rgba(0,0,0,.35);
+  backdrop-filter:blur(10px);
+}
+.header-inner{
+  height:56px; display:flex; align-items:center; justify-content:space-between;
+}
+
+/* --------- Cartes / UI --------- */
 .card{
   border:1px solid var(--border);
   border-radius:24px;
   background:linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.04));
   backdrop-filter:blur(var(--blur));
-  padding:18px;
+  padding:16px;
 }
 .h1{font-size:22px; font-weight:700; letter-spacing:.2px; margin:0}
 .h2{font-size:18px; font-weight:600; letter-spacing:.2px; margin:0}
 .sub{font-size:12px; opacity:.72}
-
-/* ------- Header ------- */
-.header{
-  position:sticky; top:0; z-index:40; border-bottom:1px solid var(--border);
-  background:rgba(0,0,0,.35); backdrop-filter:blur(10px);
+.btn{
+  padding:8px 12px;
+  border:1px solid var(--border);
+  border-radius:16px;
 }
-.header-inner{height:56px; display:flex; align-items:center; justify-content:space-between}
+.btn--danger{border-color:#f87171; color:#fca5a5}
+.input{
+  width:100%;
+  padding:10px 12px;
+  border:1px solid var(--border);
+  border-radius:12px;
+  background:transparent;
+}
 
-/* ------- Grilles ------- */
+/* --------- Grilles --------- */
 .grid{display:grid; gap:16px}
 .grid-2{grid-template-columns:1fr}
 .grid-3{grid-template-columns:1fr}
-@media (min-width:768px){ .grid-2{grid-template-columns:1fr 1fr} .grid-3{grid-template-columns:1fr 1fr 1fr}}
+@media (min-width:768px){
+  .grid-2{grid-template-columns:1fr 1fr}
+  .grid-3{grid-template-columns:1fr 1fr 1fr}
+}
 
-/* ------- Barre de progression ------- */
-.progress{height:8px; background:rgba(255,255,255,.1); border-radius:999px; overflow:hidden}
-.progress__bar{height:100%; background:linear-gradient(90deg,var(--accent1),var(--accent2))}
+/* --------- Progress bar --------- */
+.progress{
+  height:8px; background:rgba(255,255,255,.1);
+  border-radius:999px; overflow:hidden;
+}
+.progress__bar{
+  height:100%;
+  background:linear-gradient(90deg, var(--accent1), var(--accent2));
+}
 
-/* ------- Hydratation (bouteille) ------- */
+/* --------- Hydratation (bouteille) --------- */
 .bottle{width:140px; max-width:32vw; height:240px; margin:0 auto}
 .bottle-wrap{display:flex; flex-direction:column; align-items:center; gap:10px}
 
-/* ------- Side menu ------- */
+/* --------- Side menu (burger) --------- */
 .sidemenu-backdrop{position:fixed; inset:0; background:#000; opacity:.6}
-.sidemenu{position:fixed; top:0; right:0; height:100%; width:88%; max-width:360px;
-  transform:translateX(100%); transition:transform .3s ease}
+.sidemenu{
+  position:fixed; top:0; right:0; height:100%; width:88%; max-width:360px;
+  background:rgba(0,0,0,.65); backdrop-filter:blur(14px);
+  border-left:1px solid var(--border);
+  transform:translateX(100%); transition:transform .3s ease; z-index:60;
+}
 .sidemenu--open{transform:translateX(0)}
 
+/* --------- Utilitaires --------- */
 .break-anywhere{overflow-wrap:anywhere; word-break:break-word}
+
+/* --------- Variante thème SOBRE ---------
+   (Appliquée via JS en changeant les variables) */
+body.theme-sobre{
+  --bg:#ffffff;
+  --text:#000000;
+  --border:#e5e7eb;
+  --accent1:#111111;
+  --accent2:#111111;
+}
+body.theme-sobre .card{
+  background:#ffffff;
+  border:1px solid #e5e7eb;
+  backdrop-filter:none;
+  box-shadow:0 6px 20px rgba(0,0,0,.07);
+}
+
+/* --------- Sécurité pour iOS notch --------- */
+@supports(padding:max(0px)){
+  body{ padding-bottom: env(safe-area-inset-bottom); }
+}
