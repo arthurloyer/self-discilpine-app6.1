@@ -1,24 +1,13 @@
-:root {
-  --bg: #0b0c12;
-  --card: rgba(255, 255, 255, 0.06);
-  --border: rgba(255, 255, 255, 0.18);
-  --text: #ffffff;
-  --accent1: #38bdf8; /* bleu néon */
-  --accent2: #a855f7; /* violet néon */
-  --blur: 10px;
-}
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Ascend</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>
 
-* { box-sizing: border-box; }
-html, body, #root { height: 100%; overflow-x: hidden; }
-body {
-  margin: 0;
-  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial;
-  background: var(--bg);
-  color: var(--text);
-}
-
-img { display: block; max-width: 100%; }
-button { background: none; color: inherit; cursor: pointer; border: 0; }
-input, select, button { font: inherit; color: inherit; }
-
-.break-anywhere { overflow-wrap: anywhere; word-break: break-word; }
