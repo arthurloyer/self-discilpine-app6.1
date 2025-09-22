@@ -1,47 +1,58 @@
-:root {
-  --bg: #0b0c12;
-  --card: rgba(255, 255, 255, 0.06);
-  --border: rgba(255, 255, 255, 0.18);
-  --text: #ffffff;
-  --accent1: #38bdf8; /* bleu néon */
-  --accent2: #a855f7; /* violet néon */
-  --blur: 10px;
+:root{
+  --bg:#0b0c12; --card:rgba(255,255,255,.06); --border:rgba(255,255,255,.18);
+  --text:#fff; --accent1:#38bdf8; --accent2:#a855f7; --blur:14px;
 }
 
-* {
-  box-sizing: border-box;
-}
+*{box-sizing:border-box}
+html,body,#root{height:100%; margin:0; overflow-x:hidden}
+body{font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial; background:var(--bg); color:var(--text)}
+img{display:block; max-width:100%}
+button{background:none; color:inherit; cursor:pointer; border:0}
+input,select,button{font:inherit; color:inherit}
 
-html, body, #root {
-  height: 100%;
-  margin: 0;
-  overflow-x: hidden;
-}
+/* ------- Layout global ------- */
+.container{max-width:1100px; margin:0 auto; padding:20px 16px}
+.stack{display:flex; flex-direction:column; gap:16px}
+.stack-lg{display:flex; flex-direction:column; gap:32px}
+.row{display:flex; align-items:center; gap:12px; flex-wrap:wrap}
 
-body {
-  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial;
-  background: var(--bg);
-  color: var(--text);
+/* ------- Cartes & têtes ------- */
+.card{
+  border:1px solid var(--border);
+  border-radius:24px;
+  background:linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.04));
+  backdrop-filter:blur(var(--blur));
+  padding:18px;
 }
+.h1{font-size:22px; font-weight:700; letter-spacing:.2px; margin:0}
+.h2{font-size:18px; font-weight:600; letter-spacing:.2px; margin:0}
+.sub{font-size:12px; opacity:.72}
 
-img {
-  display: block;
-  max-width: 100%;
+/* ------- Header ------- */
+.header{
+  position:sticky; top:0; z-index:40; border-bottom:1px solid var(--border);
+  background:rgba(0,0,0,.35); backdrop-filter:blur(10px);
 }
+.header-inner{height:56px; display:flex; align-items:center; justify-content:space-between}
 
-button {
-  background: none;
-  color: inherit;
-  cursor: pointer;
-  border: 0;
-}
+/* ------- Grilles ------- */
+.grid{display:grid; gap:16px}
+.grid-2{grid-template-columns:1fr}
+.grid-3{grid-template-columns:1fr}
+@media (min-width:768px){ .grid-2{grid-template-columns:1fr 1fr} .grid-3{grid-template-columns:1fr 1fr 1fr}}
 
-input, select, button {
-  font: inherit;
-  color: inherit;
-}
+/* ------- Barre de progression ------- */
+.progress{height:8px; background:rgba(255,255,255,.1); border-radius:999px; overflow:hidden}
+.progress__bar{height:100%; background:linear-gradient(90deg,var(--accent1),var(--accent2))}
 
-.break-anywhere {
-  overflow-wrap: anywhere;
-  word-break: break-word;
-}
+/* ------- Hydratation (bouteille) ------- */
+.bottle{width:140px; max-width:32vw; height:240px; margin:0 auto}
+.bottle-wrap{display:flex; flex-direction:column; align-items:center; gap:10px}
+
+/* ------- Side menu ------- */
+.sidemenu-backdrop{position:fixed; inset:0; background:#000; opacity:.6}
+.sidemenu{position:fixed; top:0; right:0; height:100%; width:88%; max-width:360px;
+  transform:translateX(100%); transition:transform .3s ease}
+.sidemenu--open{transform:translateX(0)}
+
+.break-anywhere{overflow-wrap:anywhere; word-break:break-word}
